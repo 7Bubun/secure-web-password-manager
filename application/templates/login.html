@@ -1,0 +1,16 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div id="login-container" class="container centered-content">
+    <div id="login-form" class="centered-content">
+        <form>
+            <label for="username">Nazwa użytkownika</label> <br />
+            <input type="text" id="username" class="login-text-input" /> <br />
+
+            <label for="password">Hasło</label> <br />
+            <input type="text" id="password" class="login-text-input" /> <br />
+            <input type="submit" value="Zaloguj" />
+        </form>
+    </div>
+</div>
+{% endblock %}
