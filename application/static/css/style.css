@@ -28,7 +28,7 @@ body {
     padding-top: 32px;
     padding-bottom: 32px;
     border-radius: 20px;
-    background-color: cornflowerblue;
+    background-color: #00611a;
     color: whitesmoke;
     font-size: 48px;
     text-decoration: none;
@@ -45,7 +45,7 @@ body {
 
 #login-form {
     width: 70%;
-    height: 50%;
+    height: 55%;
     background-color: #191919;
     border-radius: 24px;
 }
@@ -56,9 +56,24 @@ body {
 
 .login-text-input {
     width: 70%;
+    margin-top: 4px;
     margin-bottom: 20px;
 }
 
+.btn-input {
+    background-color: #00611a;
+    color: whitesmoke;
+    width: 100px;
+    padding-top: 4px;
+    padding-bottom: 4px;
+    border: none;
+    border-radius: 5px;
+}
+
 .login-btn-input {
-    width: 50%;
+    margin-bottom: 42px;
+}
+
+.register-btn-input {
+    margin-bottom: 32px;    
 }
