@@ -3,14 +3,14 @@
 {% block maincontent %}
 <div id="login-container" class="container centered-content">
     <div id="login-form" class="centered-content">
-        <form>
+        <form action="#" method="post">
             <h1>Logowanie</h1>
 
             <label for="username">Nazwa użytkownika</label> <br />
-            <input type="text" id="username" class="login-text-input" /> <br />
+            <input type="text" name="username" id="username" class="login-text-input" /> <br />
 
             <label for="password">Hasło</label> <br />
-            <input type="password" id="password" class="login-text-input" /> <br />
+            <input type="password" name="password" id="password" class="login-text-input" /> <br />
             <input type="submit" value="Zaloguj" class="btn-input login-btn-input" />
         </form>
     </div>

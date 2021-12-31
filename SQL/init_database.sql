@@ -1,4 +1,4 @@
-CREATE USER 'password_manager'@'localhost' IDENTIFIED BY '843gfbwufb239eubswsfhsife';
+CREATE USER 'password_manager'@'localhost' IDENTIFIED BY 'insert password here';
 GRANT ALL PRIVILEGES ON * . * TO 'password_manager'@'localhost';
 
 CREATE DATABASE PASSWORD_MANAGER;
