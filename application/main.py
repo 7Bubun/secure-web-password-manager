@@ -57,9 +57,22 @@ def register():
 @app.route('/passwords')
 def passwords():
     if 'username' in session:
-        return render_template('passwords.html', user=session['username'])
+        passwords = dbm.get_users_passwords(session['username'])
+        return render_template('passwords.html', user=session['username'], list_of_passwords=passwords)
     else:
         return redirect('/login')
+
+@app.route('/password-management', methods=['POST', 'UPDATE', 'DELETE'])
+def manage_password():
+    if request.method == 'POST':
+        username = session['username']
+        name = request.form['name']
+        value = request.form['password']
+        dbm.add_password(username, name, value)
+        return redirect('/passwords')
+
+    else:
+        return render_template('message.html', message='jeszcze niezaimplementowane!', link='/')
 
 if __name__ == '__main__':
     app.run(debug=True)

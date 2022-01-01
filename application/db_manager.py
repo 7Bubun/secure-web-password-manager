@@ -45,3 +45,16 @@ class DataBaseManager:
 
         password_prepared = bytes(password, 'ascii') + self.pepper
         return self.hasher.verify(result, password_prepared)
+
+    def get_users_passwords(self, username):
+        # NOT SECURE YET
+        query = f'SELECT P.NAME_OF_PASSWORD, P.VALUE_OF_PASSWORD FROM PASSWORDS AS P WHERE P.OWNER_OF_PASSWORD = "{username}"'
+        self.cursor.execute(query)
+        return self.cursor
+
+    def add_password(self, user, name_of_password, value):
+        # NOT SECURE YET (SQL inj, XSS, no encryption)
+        query = f'''INSERT INTO PASSWORDS (NAME_OF_PASSWORD, VALUE_OF_PASSWORD, OWNER_OF_PASSWORD) 
+                        VALUES ("{name_of_password}", "{value}", "{user}")'''
+        self.cursor.execute(query)
+        self.connection.commit()
