@@ -113,10 +113,27 @@ body {
 }
 
 #error-container {
-    width: 400px;
-    height: 400px;
+    background-color: #191919;
+    width: 448px;
+    min-height: 200px;
+    margin-top: 200px;
     margin-left: auto;
     margin-right: auto;
+    border-radius: 24px;
+    text-align: center;
+}
+
+#error-content{
+    width: 90%;
+    height: 100%;
+}
+
+.error-btn {
+    background-color: #00611a;
+    color: whitesmoke;
+    text-decoration: none;
+    border-radius: 5px;
+    padding: 4px;
 }
 
 #passwords-container {
