@@ -1,0 +1,23 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="navbar">
+    <div class="navbar-container">
+        <a href="/" class="navbar-btn">
+            Strona główna
+        </a>
+
+        <a href="/passwords" class="navbar-btn">
+            Hasła
+        </a>
+
+        <a href="/logout" class="navbar-btn">
+            Wyloguj się
+        </a>
+
+        <div class="clear-both"></div>
+    </div>
+</div>
+
+{% block maincontent %} {% endblock %}
+{% endblock %}

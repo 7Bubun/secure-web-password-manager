@@ -1,7 +1,10 @@
-from flask import Flask, render_template, request
+from flask import Flask, redirect, render_template, request, session
+from Crypto.Protocol.KDF import PBKDF2
+from Crypto.Random import get_random_bytes
 import db_manager
 
-app = Flask(__name__)
+app = Flask(__name__)   # TO DO: store password in env
+app.secret_key = PBKDF2('drowssap', salt=get_random_bytes(8), count=1234)
 dbm = db_manager.DataBaseManager()
 
 @app.route('/')
@@ -11,6 +14,8 @@ def index():
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'GET':
+        if 'username' in session:
+            return redirect('/passwords')
         return render_template('login.html')
     
     elif request.method == 'POST':
@@ -19,9 +24,15 @@ def login():
 
         try:
             dbm.verify_user(username, password)
-            return f'<h1>Hello, {username}!</h1>'
+            session['username'] = username            
+            return redirect('/passwords')
         except Exception as e:
             return render_template('message.html', message=e, link='/login') #TMP message 
+
+@app.route('/logout')
+def logout():
+    session.clear()
+    return redirect('/login')
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -42,6 +53,13 @@ def register():
 
         else:
             return render_template('message.html', message='różne', link='/register') #TMP message
+
+@app.route('/passwords')
+def passwords():
+    if 'username' in session:
+        return render_template('passwords.html', user=session['username'])
+    else:
+        return redirect('/login')
 
 if __name__ == '__main__':
     app.run(debug=True)
