@@ -62,26 +62,37 @@ def passwords():
     else:
         return redirect('/login')
 
-@app.route('/password-management', methods=['POST', 'PUT', 'DELETE'])
-def manage_password():
+@app.route('/password-management/add', methods=['POST'])
+def add_password():
     if request.method == 'POST':
-        username = session['username']
-        name = request.form['name']
-        value = request.form['password']
-        dbm.add_password(username, name, value)
+        dbm.add_password(
+            session['username'],
+            request.form['name'],
+            request.form['password']
+        )
         return redirect('/passwords')
 
-    else:
-        return render_template('message.html', message='jeszcze niezaimplementowane!', link='/')
+@app.route('/password-management/update', methods=['POST'])
+def update_password(): 
+    dbm.update_password(
+        request.form['id'],
+        request.form['name'],
+        request.form['value']
+    )
+    return redirect('/passwords')
 
 @app.route('/password-management/action', methods=['POST'])
 def update():
+    if not 'username' in session:
+        return redirect('/login')
+
+    password_id = int(request.form['id'])
     password_name = request.form['name']
     password_value = request.form['value']
     action = request.form['action']
     
     if action == 'update':
-        return 'to do'
+        return render_template('password_update.html', id=password_id, name=password_name, value=password_value)
     elif action == 'delete':
         return 'to do'
     elif action == 'share':

@@ -27,8 +27,7 @@ class DataBaseManager:
             salt_len=options['salt_len']            
         )
 
-
-    def create_user(self, username, password):
+    def create_user(self, username: str, password: str):
         password_prepared = bytes(password, 'ascii') + self.pepper
         hashed_password = self.hasher.hash(password_prepared)
         
@@ -37,7 +36,7 @@ class DataBaseManager:
         self.cursor.execute(query)
         self.connection.commit()
 
-    def verify_user(self, username, password):
+    def verify_user(self, username: str, password: str):
         # NOT SECURE YET
         query = f'SELECT U.HASHED_PASSWORD FROM USERS AS U WHERE U.USERNAME = "{username}"'
         self.cursor.execute(query)
@@ -46,15 +45,22 @@ class DataBaseManager:
         password_prepared = bytes(password, 'ascii') + self.pepper
         return self.hasher.verify(result, password_prepared)
 
-    def get_users_passwords(self, username):
+    def get_users_passwords(self, username: str):
         # NOT SECURE YET
-        query = f'SELECT P.NAME_OF_PASSWORD, P.VALUE_OF_PASSWORD, P.OWNER_OF_PASSWORD FROM PASSWORDS AS P WHERE P.OWNER_OF_PASSWORD = "{username}"'
+        query = f'''SELECT P.NAME_OF_PASSWORD, P.VALUE_OF_PASSWORD, P.OWNER_OF_PASSWORD, P.ID 
+                        FROM PASSWORDS AS P WHERE P.OWNER_OF_PASSWORD = "{username}"'''
         self.cursor.execute(query)
         return self.cursor
 
-    def add_password(self, user, name_of_password, value):
+    def add_password(self, user: str, name_of_password: str, value: str):
         # NOT SECURE YET (SQL inj, XSS, no encryption)
         query = f'''INSERT INTO PASSWORDS (NAME_OF_PASSWORD, VALUE_OF_PASSWORD, OWNER_OF_PASSWORD) 
                         VALUES ("{name_of_password}", "{value}", "{user}")'''
+        self.cursor.execute(query)
+        self.connection.commit()
+
+    def update_password(self, id: int, name: str, value: str):
+        # NOT SECURE YET
+        query = f'UPDATE PASSWORDS SET NAME_OF_PASSWORD = "{name}", VALUE_OF_PASSWORD = "{value}" WHERE ID = {id}'
         self.cursor.execute(query)
         self.connection.commit()

@@ -92,7 +92,7 @@ body {
 .btn-input {
     background-color: #00611a;
     color: whitesmoke;
-    width: 100px;
+    min-width: 100px;
     padding-top: 4px;
     padding-bottom: 4px;
     border: none;
@@ -218,4 +218,14 @@ li.passwords-row {
 
 .passwords-form-submit-btn {
     float: left;
+}
+
+#update-password-container {
+    width: 480px;
+    height: 400px;
+    margin-top: 80px;
+    margin-left: auto;
+    margin-right: auto;
+    background-color: #191919;
+    border-radius: 24px;
 }
