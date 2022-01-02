@@ -56,29 +56,36 @@ def register():
 
 @app.route('/passwords')
 def passwords():
-    if 'username' in session:
-        passwords = dbm.get_users_passwords(session['username'])
-        return render_template('passwords.html', user=session['username'], list_of_passwords=passwords)
-    else:
+    if not 'username' in session:
         return redirect('/login')
+
+    passwords = dbm.get_users_passwords(session['username'])
+    return render_template('passwords.html', user=session['username'], list_of_passwords=passwords)    
 
 @app.route('/password-management/add', methods=['POST'])
 def add_password():
-    if request.method == 'POST':
-        dbm.add_password(
-            session['username'],
-            request.form['name'],
-            request.form['password']
-        )
-        return redirect('/passwords')
+    if not 'username' in session:
+        return redirect('/login')
+
+    dbm.add_password(
+        session['username'],
+        request.form['name'],
+        request.form['password']
+    )
+
+    return redirect('/passwords')
 
 @app.route('/password-management/update', methods=['POST'])
 def update_password(): 
+    if not 'username' in session:
+        return redirect('/login')
+    
     dbm.update_password(
         request.form['id'],
         request.form['name'],
         request.form['value']
     )
+
     return redirect('/passwords')
 
 @app.route('/password-management/action', methods=['POST'])
