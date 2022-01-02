@@ -1,0 +1,26 @@
+{% extends "logged_layout.html" %}
+
+{% block maincontent %}
+<div style="margin-top: 200px;">
+
+    hasło: {{passwords_name}} <br />
+
+    {% if False %}
+    Hasło nie jest nikomu udostępniane.
+    {% else %}
+    <ul>
+        {% for user in users %}
+        <li> {{user[0]}}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+
+    <form action="/shares-management/add" method="post">
+        <input type="hidden" name="id" value="{{passwords_id}}" />
+        <input type="hidden" name="owner" value="{{owner}}" />
+        <label for="username">Udostępnij hasło innemu użytkownikowi</label>
+        <input type="text" name="username" id="username" />
+        <input type="submit" value="Udostępnij" />
+    </form>
+</div>
+{% endblock %}

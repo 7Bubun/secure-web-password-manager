@@ -60,25 +60,54 @@ def passwords():
     if not 'username' in session:
         return redirect('/login')
 
-    passwords = dbm.get_users_passwords(session['username'])
-    return render_template('passwords.html', user=session['username'], list_of_passwords=passwords)    
+    user = session['username']
+    passwords = dbm.get_users_passwords(user)
+    shared_passwords = dbm.get_passwords_shared_to_user(user)
+    return render_template(
+        'passwords.html',
+        user=session['username'],
+        list_of_passwords=passwords,
+        shared_passwords=shared_passwords
+    )    
 
 @app.route('/password-management/action', methods=['POST'])
-def update():
+def choose_action():
     if not 'username' in session:
         return redirect('/login')
 
     password_id = int(request.form['id'])
     password_name = request.form['name']
     password_value = request.form['value']
+    password_owner = request.form['owner']
     action = request.form['action']
     
     if action == 'update':
-        return render_template('password_update.html', id=password_id, name=password_name, value=password_value)
+        return render_template(
+            'password_update.html',
+            id=password_id,
+            name=password_name,
+            value=password_value,
+            owner=password_owner
+        )
+        
     elif action == 'delete':
-        return render_template('password_delete.html', id=password_id, name=password_name, value=password_value)
+        return render_template(
+            'password_delete.html',
+            id=password_id,
+            name=password_name,
+            value=password_value,
+            owner=password_owner
+        )
+        
     elif action == 'share':
-        return 'to do'
+        return render_template(
+            'sharing_panel.html',
+            users=dbm.get_users_that_got_password_through_sharing(password_id),
+            passwords_id=password_id,
+            passwords_name=password_name,
+            owner=password_owner
+        )
+
     else:
         return redirect('/passwords')
 
@@ -100,11 +129,12 @@ def update_password():
     if not 'username' in session:
         return redirect('/login')
     
-    dbm.update_password(
-        request.form['id'],
-        request.form['name'],
-        request.form['value']
-    )
+    if request.form['owner'] == session['username']:
+        dbm.update_password(
+            request.form['id'],
+            request.form['name'],
+            request.form['value']
+        )
 
     return redirect('/passwords')
 
@@ -112,8 +142,20 @@ def update_password():
 def delete_password():
     if not 'username' in session:
         return redirect('/login')
+
+    if request.form['owner'] == session['username']:
+        dbm.delete_password(request.form['id'])
     
-    dbm.delete_password(request.form['id'])
+    return redirect('/passwords') 
+
+@app.route('/shares-management/add', methods=['POST'])
+def share():
+    if not 'username' in session:
+        return redirect('/login')
+
+    if request.form['owner'] == session['username']:
+        dbm.share_password(request.form['id'], request.form['username'])    
+
     return redirect('/passwords')
 
 if __name__ == '__main__':
