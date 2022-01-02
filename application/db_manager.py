@@ -48,7 +48,7 @@ class DataBaseManager:
 
     def get_users_passwords(self, username):
         # NOT SECURE YET
-        query = f'SELECT P.NAME_OF_PASSWORD, P.VALUE_OF_PASSWORD FROM PASSWORDS AS P WHERE P.OWNER_OF_PASSWORD = "{username}"'
+        query = f'SELECT P.NAME_OF_PASSWORD, P.VALUE_OF_PASSWORD, P.OWNER_OF_PASSWORD FROM PASSWORDS AS P WHERE P.OWNER_OF_PASSWORD = "{username}"'
         self.cursor.execute(query)
         return self.cursor
 

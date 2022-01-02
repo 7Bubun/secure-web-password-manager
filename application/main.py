@@ -62,7 +62,7 @@ def passwords():
     else:
         return redirect('/login')
 
-@app.route('/password-management', methods=['POST', 'UPDATE', 'DELETE'])
+@app.route('/password-management', methods=['POST', 'PUT', 'DELETE'])
 def manage_password():
     if request.method == 'POST':
         username = session['username']
@@ -73,6 +73,21 @@ def manage_password():
 
     else:
         return render_template('message.html', message='jeszcze niezaimplementowane!', link='/')
+
+@app.route('/password-management/action', methods=['POST'])
+def update():
+    password_name = request.form['name']
+    password_value = request.form['value']
+    action = request.form['action']
+    
+    if action == 'update':
+        return 'to do'
+    elif action == 'delete':
+        return 'to do'
+    elif action == 'share':
+        return 'to do'
+    else:
+        return redirect('/passwords')
 
 if __name__ == '__main__':
     app.run(debug=True)
