@@ -1,6 +1,7 @@
 from flask import Flask, redirect, render_template, request, session
 from Crypto.Protocol.KDF import PBKDF2
 from Crypto.Random import get_random_bytes
+
 import db_manager
 
 app = Flask(__name__)   # TO DO: store password in env
@@ -62,6 +63,25 @@ def passwords():
     passwords = dbm.get_users_passwords(session['username'])
     return render_template('passwords.html', user=session['username'], list_of_passwords=passwords)    
 
+@app.route('/password-management/action', methods=['POST'])
+def update():
+    if not 'username' in session:
+        return redirect('/login')
+
+    password_id = int(request.form['id'])
+    password_name = request.form['name']
+    password_value = request.form['value']
+    action = request.form['action']
+    
+    if action == 'update':
+        return render_template('password_update.html', id=password_id, name=password_name, value=password_value)
+    elif action == 'delete':
+        return render_template('password_delete.html', id=password_id, name=password_name, value=password_value)
+    elif action == 'share':
+        return 'to do'
+    else:
+        return redirect('/passwords')
+
 @app.route('/password-management/add', methods=['POST'])
 def add_password():
     if not 'username' in session:
@@ -88,24 +108,13 @@ def update_password():
 
     return redirect('/passwords')
 
-@app.route('/password-management/action', methods=['POST'])
-def update():
+@app.route('/password-management/delete', methods=['POST'])
+def delete_password():
     if not 'username' in session:
         return redirect('/login')
-
-    password_id = int(request.form['id'])
-    password_name = request.form['name']
-    password_value = request.form['value']
-    action = request.form['action']
     
-    if action == 'update':
-        return render_template('password_update.html', id=password_id, name=password_name, value=password_value)
-    elif action == 'delete':
-        return 'to do'
-    elif action == 'share':
-        return 'to do'
-    else:
-        return redirect('/passwords')
+    dbm.delete_password(request.form['id'])
+    return redirect('/passwords')
 
 if __name__ == '__main__':
     app.run(debug=True)

@@ -64,3 +64,8 @@ class DataBaseManager:
         query = f'UPDATE PASSWORDS SET NAME_OF_PASSWORD = "{name}", VALUE_OF_PASSWORD = "{value}" WHERE ID = {id}'
         self.cursor.execute(query)
         self.connection.commit()
+
+    def delete_password(self, id: int):
+        query = f'DELETE FROM PASSWORDS WHERE ID = {id}'
+        self.cursor.execute(query)
+        self.connection.commit()
