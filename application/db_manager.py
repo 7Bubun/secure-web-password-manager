@@ -1,5 +1,5 @@
-from sys import _current_frames
 from argon2 import PasswordHasher
+from Crypto.Protocol.KDF import PBKDF2
 from os import environ
 import mysql.connector
 
@@ -9,6 +9,10 @@ from config import Config
 class DataBaseManager:
 
     def __init__(self):
+        passphrase = 'passphrase' # not secure yet
+        salt = b'salt' # not secure yet
+        self.key = PBKDF2(passphrase, salt, count=1234).hex()
+        
         self.connection = mysql.connector.connect(
             host='localhost',
             user='password_manager',
@@ -51,18 +55,19 @@ class DataBaseManager:
 
     def get_users_passwords(self, username: str):
         # NOT SECURE YET
-        query = f'''SELECT P.NAME_OF_PASSWORD, P.VALUE_OF_PASSWORD, P.OWNER_OF_PASSWORD, P.ID 
-                        FROM PASSWORDS AS P WHERE P.OWNER_OF_PASSWORD = "{username}"'''
+        query = f'''SELECT P.NAME_OF_PASSWORD, AES_DECRYPT(P.VALUE_OF_PASSWORD, UNHEX("{self.key}")),
+                        P.OWNER_OF_PASSWORD, P.ID FROM PASSWORDS AS P WHERE P.OWNER_OF_PASSWORD = "{username}"'''
         cursor = self.connection.cursor()
         cursor.execute(query)
-        result = list(cursor)
+        result = [(data[0], data[1].decode(), data[2], data[3]) for data in cursor]
         cursor.close()
         return result
 
     def add_password(self, user: str, name_of_password: str, value: str):
+        
         # NOT SECURE YET (SQL inj, XSS, no encryption)
         query = f'''INSERT INTO PASSWORDS(NAME_OF_PASSWORD, VALUE_OF_PASSWORD, OWNER_OF_PASSWORD) 
-                        VALUES("{name_of_password}", "{value}", "{user}")'''
+                        VALUES("{name_of_password}", AES_ENCRYPT("{value}", UNHEX("{self.key}")), "{user}")'''
         cursor = self.connection.cursor()
         cursor.execute(query)
         self.connection.commit()
@@ -70,15 +75,18 @@ class DataBaseManager:
 
     def update_password(self, id: int, name: str, value: str):
         # NOT SECURE YET
-        query = f'UPDATE PASSWORDS SET NAME_OF_PASSWORD = "{name}", VALUE_OF_PASSWORD = "{value}" WHERE ID = {id}'
+        query = f'''UPDATE PASSWORDS SET NAME_OF_PASSWORD = "{name}",
+                         VALUE_OF_PASSWORD = AES_ENCRYPT("{value}", UNHEX("{self.key}")) WHERE ID = {id}'''
         cursor = self.connection.cursor()
         cursor.execute(query)
         self.connection.commit()
         cursor.close()
 
     def delete_password(self, id: int):
-        query = f'DELETE FROM PASSWORDS WHERE ID = {id}'
         cursor = self.connection.cursor()
+        query = f'DELETE FROM SHARES WHERE ID_OF_PASSWORD = {id}'
+        cursor.execute(query)
+        query = f'DELETE FROM PASSWORDS WHERE ID = {id}'
         cursor.execute(query)
         self.connection.commit()
         cursor.close()
@@ -100,10 +108,10 @@ class DataBaseManager:
         cursor.close()
 
     def get_passwords_shared_to_user(self, username: str):
-        query = f'''SELECT P.NAME_OF_PASSWORD, P.VALUE_OF_PASSWORD, P.OWNER_OF_PASSWORD, P.ID
+        query = f'''SELECT P.NAME_OF_PASSWORD, AES_DECRYPT(P.VALUE_OF_PASSWORD, UNHEX("{self.key}")), P.OWNER_OF_PASSWORD, P.ID
                         FROM PASSWORDS AS P, SHARES AS S WHERE P.ID = S.ID_OF_PASSWORD AND S.SHARED_TO = "{username}"'''
         cursor = self.connection.cursor()
         cursor.execute(query)
-        result = list(cursor)
+        result = [(data[0], data[1].decode(), data[2], data[3]) for data in cursor]
         cursor.close()
         return result
