@@ -24,12 +24,20 @@ class DataBaseManager:
         self.pepper = f.read()
         f.close()
 
+        f = open('initialization_vector', 'rb')
+        self.init_vector = f.read()
+        f.close()
+
         options = Config.get_hashing_parameters()
         self.hasher = PasswordHasher(
             time_cost=options['time_const'],
             hash_len=options['hash_len'],
             salt_len=options['salt_len']            
         )
+
+        cursor = self.connection.cursor()
+        cursor.execute('SET block_encryption_mode = "aes-128-cbc"')
+        cursor.close()
 
     def create_user(self, username: str, password: str):
         password_prepared = bytes(password, 'ascii') + self.pepper
@@ -55,7 +63,7 @@ class DataBaseManager:
 
     def get_users_passwords(self, username: str):
         # NOT SECURE YET
-        query = f'''SELECT P.NAME_OF_PASSWORD, AES_DECRYPT(P.VALUE_OF_PASSWORD, UNHEX("{self.key}")),
+        query = f'''SELECT P.NAME_OF_PASSWORD, AES_DECRYPT(P.VALUE_OF_PASSWORD, UNHEX("{self.key}"), "{str(self.init_vector)}"),
                         P.OWNER_OF_PASSWORD, P.ID FROM PASSWORDS AS P WHERE P.OWNER_OF_PASSWORD = "{username}"'''
         cursor = self.connection.cursor()
         cursor.execute(query)
@@ -67,7 +75,9 @@ class DataBaseManager:
         
         # NOT SECURE YET (SQL inj, XSS, no encryption)
         query = f'''INSERT INTO PASSWORDS(NAME_OF_PASSWORD, VALUE_OF_PASSWORD, OWNER_OF_PASSWORD) 
-                        VALUES("{name_of_password}", AES_ENCRYPT("{value}", UNHEX("{self.key}")), "{user}")'''
+                        VALUES("{name_of_password}", AES_ENCRYPT("{value}", UNHEX("{self.key}"),
+                        "{str(self.init_vector)}"), "{user}")
+        '''
         cursor = self.connection.cursor()
         cursor.execute(query)
         self.connection.commit()
@@ -76,7 +86,9 @@ class DataBaseManager:
     def update_password(self, id: int, name: str, value: str):
         # NOT SECURE YET
         query = f'''UPDATE PASSWORDS SET NAME_OF_PASSWORD = "{name}",
-                         VALUE_OF_PASSWORD = AES_ENCRYPT("{value}", UNHEX("{self.key}")) WHERE ID = {id}'''
+                        VALUE_OF_PASSWORD = AES_ENCRYPT("{value}", UNHEX("{self.key}"), "{str(self.init_vector)}")
+                        WHERE ID = {id}
+        '''
         cursor = self.connection.cursor()
         cursor.execute(query)
         self.connection.commit()
@@ -108,8 +120,10 @@ class DataBaseManager:
         cursor.close()
 
     def get_passwords_shared_to_user(self, username: str):
-        query = f'''SELECT P.NAME_OF_PASSWORD, AES_DECRYPT(P.VALUE_OF_PASSWORD, UNHEX("{self.key}")), P.OWNER_OF_PASSWORD, P.ID
-                        FROM PASSWORDS AS P, SHARES AS S WHERE P.ID = S.ID_OF_PASSWORD AND S.SHARED_TO = "{username}"'''
+        query = f'''SELECT P.NAME_OF_PASSWORD, AES_DECRYPT(P.VALUE_OF_PASSWORD, UNHEX("{self.key}"), "{str(self.init_vector)}"),
+                        P.OWNER_OF_PASSWORD, P.ID FROM PASSWORDS AS P, SHARES AS S 
+                        WHERE P.ID = S.ID_OF_PASSWORD AND S.SHARED_TO = "{username}"
+        '''
         cursor = self.connection.cursor()
         cursor.execute(query)
         result = [(data[0], data[1].decode(), data[2], data[3]) for data in cursor]

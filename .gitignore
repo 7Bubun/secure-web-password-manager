@@ -8,6 +8,7 @@ __pycache__/
 
 # user defined
 application/pepper
+application/initialization_vector
 
 # Distribution / packaging
 .Python
