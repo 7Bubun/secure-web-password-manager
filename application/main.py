@@ -1,3 +1,4 @@
+from os import link
 from flask import Flask, redirect, render_template, request, session
 from Crypto.Protocol.KDF import PBKDF2
 from Crypto.Random import get_random_bytes
@@ -54,6 +55,36 @@ def register():
 
         else:
             return render_template('message.html', message='różne', link='/register') #TMP message
+
+@app.route('/change-password')
+def change_password():
+    if not 'username' in session:
+        return redirect('/login')
+
+    return render_template('change_password.html')
+
+@app.route('/change-password', methods=['POST'])
+def change_password_post():
+    if not 'username' in session:
+        return redirect('/login')
+
+    username = session['username']
+    new_password = request.form['new-password']
+    new_password_repeated = request.form['repeated-new-password']
+    old_password = request.form['old-password']
+
+    try:
+        dbm.verify_user(username, old_password)
+
+        if new_password == new_password_repeated:
+            dbm.change_users_account_password(username, new_password)
+        else:
+            return render_template('message.html', message='różne', link='/change-password') # TMP message
+    
+    except Exception as e:
+        return render_template('message.html', message=e, link='/change-password') # TMP message
+
+    return render_template('message.html', message='Pomyślnie zmieniono hasło', link='/passwords')
 
 @app.route('/passwords')
 def passwords():

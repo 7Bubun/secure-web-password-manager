@@ -61,6 +61,18 @@ class DataBaseManager:
         password_prepared = bytes(password, 'ascii') + self.pepper
         return self.hasher.verify(result, password_prepared)
 
+    def change_users_account_password(self, username: str, new_password: str):
+        password_prepared = bytes(new_password, 'ascii') + self.pepper
+        hashed_password = self.hasher.hash(password_prepared)
+        
+        # NOT SECURE YET
+        query = f'UPDATE USERS SET HASHED_PASSWORD = "{hashed_password}" WHERE USERNAME = "{username}"'
+        cursor = self.connection.cursor()
+        cursor.execute(query)
+        self.connection.commit()
+        cursor.close()
+
+
     def get_users_passwords(self, username: str):
         # NOT SECURE YET
         query = f'''SELECT P.NAME_OF_PASSWORD, AES_DECRYPT(P.VALUE_OF_PASSWORD, UNHEX("{self.key}"), "{str(self.init_vector)}"),
