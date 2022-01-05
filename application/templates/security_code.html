@@ -1,0 +1,14 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div id="error-container" class="centered-content">
+    <div id="error-content">
+        <h1>Zarejestrowano!</h1>
+        <h2>Kod bezpieczeństwa:</h2>
+        <h2>{{security_code}}</h2>
+        <div class="centered-content">
+            <a href="/login" class="error-btn">Dalej</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

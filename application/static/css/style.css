@@ -20,16 +20,9 @@ body {
 }
 
 .navbar-container {
+    width: 512px;
     margin-left: auto;
     margin-right: auto;
-}
-
-.navbar-container-logged {
-    width: 512px;
-}
-
-.navbar-container-unlogged {
-    width: 384px;
 }
 
 .navbar-btn {

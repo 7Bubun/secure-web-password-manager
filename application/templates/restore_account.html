@@ -1,0 +1,22 @@
+{% extends "unlogged_layout.html" %}
+
+{% block maincontent %}
+<div id="login-container" class="container centered-content">
+    <div id="login-form" class="centered-content">
+        <div>
+            <form action="#" method="post">
+                <h1>Odzyskiwanie konta</h1>
+
+                <label for="username">Nazwa użytkownika</label> <br />
+                <input type="text" name="username" id="username" class="login-text-input" /> <br />
+
+                <label for="code">Kod odzyskiwania</label> <br />
+                <input type="password" name="code" id="code" class="login-text-input" /> <br />
+                <input type="submit" value="Odzyskaj" class="btn-input login-btn-input" />
+            </form>
+
+            <h5>UWAGA! Ze względów bezpieczeństwa operacja zajmuje do kilkunastu sekund.</h5>
+        </div>
+    </div>
+</div>
+{% endblock %}

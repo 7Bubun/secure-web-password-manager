@@ -39,12 +39,14 @@ class DataBaseManager:
         cursor.execute('SET block_encryption_mode = "aes-128-cbc"')
         cursor.close()
 
-    def create_user(self, username: str, password: str):
-        password_prepared = bytes(password, 'ascii') + self.pepper
-        hashed_password = self.hasher.hash(password_prepared)
-        
+    def create_user(self, username: str, password: str, security_code: str):
+        hashed_password = self.hasher.hash(bytes(password, 'ascii') + self.pepper)
+        hashed_security_code = self.hasher.hash(self.pepper + bytes.fromhex(security_code))
+
         # NOT SECURE YET
-        query = f'INSERT INTO USERS(USERNAME, HASHED_PASSWORD) VALUES ("{username}", "{hashed_password}")'
+        query = f'''INSERT INTO USERS(USERNAME, HASHED_PASSWORD, HASHED_SECURITY_CODE) 
+                        VALUES ("{username}", "{hashed_password}", "{hashed_security_code}")'''
+        
         cursor = self.connection.cursor()
         cursor.execute(query)
         self.connection.commit()
@@ -72,6 +74,14 @@ class DataBaseManager:
         self.connection.commit()
         cursor.close()
 
+    def verify_security_code(self, username: str, security_code: str):
+        # NOT SECURE YET
+        query = f'SELECT U.HASHED_SECURITY_CODE FROM USERS AS U WHERE U.USERNAME = "{username}"'
+        cursor = self.connection.cursor()
+        cursor.execute(query)
+        result = cursor.fetchone()[0]
+        cursor.close()
+        self.hasher.verify(result, self.pepper + bytes.fromhex(security_code))
 
     def get_users_passwords(self, username: str):
         # NOT SECURE YET
