@@ -3,6 +3,7 @@ from flask import Flask, redirect, render_template, request, session
 from Crypto.Protocol.KDF import PBKDF2
 from Crypto.Random import get_random_bytes
 
+from config import Config
 import db_manager
 
 
@@ -22,8 +23,15 @@ def login():
         return render_template('login.html')
     
     else:
+        if not 'username' in request.form or not 'password' in request.form:
+            return render_template('message.html', message='bad form', link='/login')
+
         username = request.form['username']
         password = request.form['password']
+
+        for char in username + password:
+            if not char in Config.get_accepted_characters():
+                return render_template('message.html', message='Niedozwolone znaki!', link='/login') # TMP message
 
         try:
             dbm.verify_user(username, password)
@@ -47,6 +55,10 @@ def register():
         password = request.form['password']
         repeated_password = request.form['password-repeated']
         
+        for char in username + password:
+            if not char in Config.get_accepted_characters():
+                return render_template('message.html', message='Niedozwolone znaki!', link='/register') # TMP message
+
         if password == repeated_password:
             try:
                 security_code = get_random_bytes(32).hex()
@@ -72,6 +84,11 @@ def change_password():
         new_password = request.form['new-password']
         new_password_repeated = request.form['repeated-new-password']
         old_password = request.form['old-password']
+
+        for char in username + new_password:
+            if not char in Config.get_accepted_characters():
+                return render_template('message.html', message='Niedozwolone znaki!', link='/change-password') # TMP message
+
         try:
             dbm.verify_user(username, old_password)
 
@@ -96,6 +113,11 @@ def restore_account():
     else:
         username = request.form['username']
         security_code = request.form['code'].lower()
+
+        for char in username + security_code:
+            if not char in Config.get_accepted_characters():
+                return render_template('message.html', message='Niedozwolone znaki!', link='/restore-account') # TMP message
+
         try:
             sleep(10)
             dbm.verify_security_code(username, security_code)
@@ -106,7 +128,7 @@ def restore_account():
         except Exception as e:
             return render_template('message.html', message=e, link='/restore-account') # TMP message
 
-@app.route('/restore-password')
+@app.route('/restore-password', methods=['GET', 'POST'])
 def restore_password():
     if not 'restoring_password' in session or not session['restoring_password']:
         return redirect('/change-password')
@@ -117,6 +139,10 @@ def restore_password():
         username = session['username']
         new_password = request.form['new-password']
         repeated_new_password = request.form['repeated-new-password']
+
+        for char in username + new_password:
+            if not char in Config.get_accepted_characters():
+                return render_template('message.html', message='Niedozwolone znaki!', link='/restore-password') # TMP message
 
         if new_password == repeated_new_password:
             dbm.change_users_account_password(username, new_password)
@@ -133,6 +159,7 @@ def passwords():
     user = session['username']
     passwords = dbm.get_users_passwords(user)
     shared_passwords = dbm.get_passwords_shared_to_user(user)
+
     return render_template(
         'passwords.html',
         user=session['username'],
@@ -201,7 +228,7 @@ def update_password():
     
     if request.form['owner'] == session['username']:
         dbm.update_password(
-            request.form['id'],
+            int(request.form['id']),
             request.form['name'],
             request.form['value']
         )
@@ -214,7 +241,7 @@ def delete_password():
         return redirect('/login')
 
     if request.form['owner'] == session['username']:
-        dbm.delete_password(request.form['id'])
+        dbm.delete_password(int(request.form['id']))
     
     return redirect('/passwords') 
 
@@ -234,7 +261,7 @@ def unshare_as_owner():
         return redirect('/login')
 
     if request.form['owner'] == session['username']:
-        dbm.unshare_password(request.form['share_id'])
+        dbm.unshare_password(int(request.form['share_id']))
 
     return redirect('/passwords')
 
@@ -243,7 +270,7 @@ def unshare_as_receiver():
     if not 'username' in session:
         return redirect('/login')
 
-    id_of_share = request.form['share_id']
+    id_of_share = int(request.form['share_id'])
     receiver = dbm.get_user_that_password_is_shared_to(id_of_share)
 
     if receiver == session['username']:

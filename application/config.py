@@ -1,3 +1,5 @@
+import string
+
 class Config:
 
     @staticmethod
@@ -7,3 +9,7 @@ class Config:
             'hash_len': 32,
             'salt_len': 8
         }
+
+    @staticmethod
+    def get_accepted_characters():
+        return string.ascii_letters + string.digits + string.punctuation
