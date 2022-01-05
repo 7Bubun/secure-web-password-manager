@@ -5,6 +5,7 @@ from Crypto.Random import get_random_bytes
 
 import db_manager
 
+
 app = Flask(__name__)   # TO DO: store password in env
 app.secret_key = PBKDF2('drowssap', salt=get_random_bytes(8), count=1234)
 dbm = db_manager.DataBaseManager()
@@ -20,7 +21,7 @@ def login():
             return redirect('/passwords')
         return render_template('login.html')
     
-    elif request.method == 'POST':
+    else:
         username = request.form['username']
         password = request.form['password']
 
@@ -41,102 +42,88 @@ def register():
     if request.method == 'GET':
         return render_template('register.html')
     
-    elif request.method == 'POST':
+    else:
         username = request.form['username']
         password = request.form['password']
         repeated_password = request.form['password-repeated']
         
         if password == repeated_password:
             try:
-                # TMP
                 security_code = get_random_bytes(32).hex()
-
                 dbm.create_user(username, password, security_code)
-
                 return render_template('security_code.html', security_code=security_code)
+
             except Exception as e:                              
                 return render_template('message.html', message=f'DB error: {e}', link='/') #TMP message
 
         else:
             return render_template('message.html', message='różne', link='/register') #TMP message
 
-@app.route('/change-password')
+@app.route('/change-password', methods=['GET', 'POST'])
 def change_password():
     if not 'username' in session:
-        return redirect('/login')
-
-    return render_template('change_password.html')
-
-@app.route('/change-password', methods=['POST'])
-def change_password_post():
-    if not 'username' in session:
-        return redirect('/login')
-
-    username = session['username']
-    new_password = request.form['new-password']
-    new_password_repeated = request.form['repeated-new-password']
-    old_password = request.form['old-password']
-
-    try:
-        dbm.verify_user(username, old_password)
-
-        if new_password == new_password_repeated:
-            dbm.change_users_account_password(username, new_password)
-        else:
-            return render_template('message.html', message='różne', link='/change-password') # TMP message
+            return redirect('/login')
     
-    except Exception as e:
-        return render_template('message.html', message=e, link='/change-password') # TMP message
+    if request.method == 'GET':
+        return render_template('change_password.html')
 
-    return render_template('message.html', message='Pomyślnie zmieniono hasło', link='/passwords')
+    else:
+        username = session['username']
+        new_password = request.form['new-password']
+        new_password_repeated = request.form['repeated-new-password']
+        old_password = request.form['old-password']
+        try:
+            dbm.verify_user(username, old_password)
 
-@app.route('/restore-account')
+            if new_password == new_password_repeated:
+                dbm.change_users_account_password(username, new_password)
+            else:
+                return render_template('message.html', message='różne', link='/change-password') # TMP message
+    
+        except Exception as e:
+            return render_template('message.html', message=e, link='/change-password') # TMP message
+
+        return render_template('message.html', message='Pomyślnie zmieniono hasło', link='/passwords')
+
+@app.route('/restore-account', methods=['GET', 'POST'])
 def restore_account():
     if 'username' in session:
-        return redirect('/passwords')
-
-    return render_template('restore_account.html')
-
-@app.route('/restore-account', methods=['POST'])
-def restore_account_post():
-    if 'username' in session:
-        return redirect('/passwords')
-
-    username = request.form['username']
-    security_code = request.form['code'].lower()
-
-    try:
-        sleep(10)
-        dbm.verify_security_code(username, security_code)
-        session['username'] = username
-        session['restoring_password'] = True
-        return redirect('/restore-password')
-
-    except Exception as e:
-        return render_template('message.html', message=e, link='/restore-account') # TMP message
+            return redirect('/passwords')
+    
+    if request.method == 'GET':
+        return render_template('restore_account.html')
+    
+    else:
+        username = request.form['username']
+        security_code = request.form['code'].lower()
+        try:
+            sleep(10)
+            dbm.verify_security_code(username, security_code)
+            session['username'] = username
+            session['restoring_password'] = True
+            return redirect('/restore-password')
+        
+        except Exception as e:
+            return render_template('message.html', message=e, link='/restore-account') # TMP message
 
 @app.route('/restore-password')
 def restore_password():
     if not 'restoring_password' in session or not session['restoring_password']:
         return redirect('/change-password')
 
-    return render_template('restore_password.html')
-
-@app.route('/restore-password', methods=['POST'])
-def restore_password_post():
-    if not 'restoring_password' in session or not session['restoring_password']:
-        return redirect('/change-password')
-
-    username = session['username']
-    new_password = request.form['new-password']
-    repeated_new_password = request.form['repeated-new-password']
-
-    if new_password == repeated_new_password:
-        dbm.change_users_account_password(username, new_password)
-        session['restoring_password'] = False
-        return redirect('/login')
+    if request.method == 'GET':
+        return render_template('restore_password.html')
     else:
-        return render_template('message.html', message='różne', link='/restore-password')
+        username = session['username']
+        new_password = request.form['new-password']
+        repeated_new_password = request.form['repeated-new-password']
+
+        if new_password == repeated_new_password:
+            dbm.change_users_account_password(username, new_password)
+            session['restoring_password'] = False
+            return redirect('/login')
+        else:
+            return render_template('message.html', message='różne', link='/restore-password')
 
 @app.route('/passwords')
 def passwords():
@@ -258,7 +245,6 @@ def unshare_as_receiver():
 
     id_of_share = request.form['share_id']
     receiver = dbm.get_user_that_password_is_shared_to(id_of_share)
-    print(receiver)
 
     if receiver == session['username']:
         dbm.unshare_password(id_of_share)
