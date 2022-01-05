@@ -102,7 +102,7 @@ def choose_action():
     elif action == 'share':
         return render_template(
             'sharing_panel.html',
-            users=dbm.get_users_that_got_password_through_sharing(password_id),
+            users_and_share_ids=dbm.get_users_that_got_password_through_sharing_and_share_ids(password_id),
             passwords_id=password_id,
             passwords_name=password_name,
             owner=password_owner
@@ -154,7 +154,31 @@ def share():
         return redirect('/login')
 
     if request.form['owner'] == session['username']:
-        dbm.share_password(request.form['id'], request.form['username'])    
+        dbm.share_password(int(request.form['id']), request.form['username'])    
+
+    return redirect('/passwords')
+
+@app.route('/shares-management/delete-as-owner', methods=['POST'])
+def unshare_as_owner():
+    if not 'username' in session:
+        return redirect('/login')
+
+    if request.form['owner'] == session['username']:
+        dbm.unshare_password(request.form['share_id'])
+
+    return redirect('/passwords')
+
+@app.route('/shares-management/delete-as-receiver', methods=['POST'])
+def unshare_as_receiver():
+    if not 'username' in session:
+        return redirect('/login')
+
+    id_of_share = request.form['share_id']
+    receiver = dbm.get_user_that_password_is_shared_to(id_of_share)
+    print(receiver)
+
+    if receiver == session['username']:
+        dbm.unshare_password(id_of_share)
 
     return redirect('/passwords')
 

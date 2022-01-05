@@ -103,13 +103,13 @@ class DataBaseManager:
         self.connection.commit()
         cursor.close()
 
-    def get_users_that_got_password_through_sharing(self, password_id: int):
-        query = f'SELECT S.SHARED_TO FROM SHARES AS S WHERE S.ID_OF_PASSWORD = {password_id}'
+    def get_users_that_got_password_through_sharing_and_share_ids(self, password_id: int):
+        query = f'SELECT S.SHARED_TO, S.ID FROM SHARES AS S WHERE S.ID_OF_PASSWORD = {password_id}'
         cursor = self.connection.cursor()
         cursor.execute(query)
         result = list(cursor)
         cursor.close()
-        return result        
+        return result
 
     def share_password(self, password_id: int, share_receivers_username: str):
         # NOT SECURE YET
@@ -121,7 +121,7 @@ class DataBaseManager:
 
     def get_passwords_shared_to_user(self, username: str):
         query = f'''SELECT P.NAME_OF_PASSWORD, AES_DECRYPT(P.VALUE_OF_PASSWORD, UNHEX("{self.key}"), "{str(self.init_vector)}"),
-                        P.OWNER_OF_PASSWORD, P.ID FROM PASSWORDS AS P, SHARES AS S 
+                        P.OWNER_OF_PASSWORD, S.ID FROM PASSWORDS AS P, SHARES AS S 
                         WHERE P.ID = S.ID_OF_PASSWORD AND S.SHARED_TO = "{username}"
         '''
         cursor = self.connection.cursor()
@@ -129,3 +129,18 @@ class DataBaseManager:
         result = [(data[0], data[1].decode(), data[2], data[3]) for data in cursor]
         cursor.close()
         return result
+
+    def get_user_that_password_is_shared_to(self, id_of_share: int):
+        query = f'SELECT U.USERNAME FROM USERS AS U, SHARES AS S WHERE S.SHARED_TO = U.USERNAME AND S.ID = {id_of_share}'
+        cursor = self.connection.cursor()
+        cursor.execute(query)
+        result = cursor.fetchone()
+        cursor.close()
+        return result[0]
+
+    def unshare_password(self, id_of_share: int):
+        query = f'DELETE FROM SHARES WHERE ID = {id_of_share}'
+        cursor = self.connection.cursor()
+        cursor.execute(query)
+        self.connection.commit()
+        cursor.close()
