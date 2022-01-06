@@ -102,7 +102,7 @@ class DataBaseManager:
         values = (self.key, str(self.init_vector), username)
         cursor = self.connection.cursor()
         cursor.execute(query, values)
-        result = [(data[0], data[1].decode(), data[2], data[3]) for data in cursor]
+        result = [(data[0], data[1].decode(), data[2], data[3]) for data in cursor.fetchall()]
         cursor.close()
         return result
 

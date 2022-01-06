@@ -2,15 +2,21 @@ from time import sleep
 from flask import Flask, redirect, render_template, request, session
 from Crypto.Protocol.KDF import PBKDF2
 from Crypto.Random import get_random_bytes
+from mysql.connector.errors import IntegrityError
 
 from config import Config
-from  db_manager import DataBaseManager
+from db_manager import DataBaseManager
 from login_attempts_guard import LoginAttemptsGuard
 
 app = Flask(__name__)   # TO DO: store password in env
 app.secret_key = PBKDF2('drowssap', salt=get_random_bytes(8), count=1234)
-dbm = DataBaseManager()
 lag = LoginAttemptsGuard()
+
+try:
+    dbm = DataBaseManager()
+except:
+    print('Nie udało się połączyć z bazą danych.')
+    exit(1)
 
 @app.route('/')
 def index():
@@ -47,9 +53,13 @@ def login():
             dbm.verify_user(username, password)
             session['username'] = username            
             return redirect('/passwords')
-        except Exception as e:
+        except Exception:
             lag.add_login_attempt(username)
-            return render_template('message.html', message=e, link='/login') #TMP message 
+            return render_template(
+                'message.html',
+                message='Podane dane logowania są nieprawidłowe.',
+                link='/login'
+            ) 
 
 @app.route('/logout')
 def logout():
@@ -70,6 +80,12 @@ def register():
             if not char in Config.get_accepted_characters():
                 return render_template('message.html', message='Niedozwolone znaki!', link='/register') # TMP message
 
+        if len(username) < 1:
+            return display_message('Nazwa użytkownika nie może być pusta.', '/register')
+
+        if len(password) < 3:
+            return display_message('Minimalna długość hasła wynosi 3 znaki.', '/register')
+
         if password == repeated_password:
             try:
                 security_code = get_random_bytes(32).hex()
@@ -77,10 +93,14 @@ def register():
                 return render_template('security_code.html', security_code=security_code)
 
             except Exception as e:                              
-                return render_template('message.html', message=f'DB error: {e}', link='/') #TMP message
+                return display_message('Podana nazwa użytkownika jest zajęta lub za długa.', '/register')
 
         else:
-            return render_template('message.html', message='różne', link='/register') #TMP message
+            return render_template(
+                'message.html',
+                message='Hasło i powtórzone hasło muszą być takie same.',
+                link='/register'
+            )
 
 @app.route('/change-password', methods=['GET', 'POST'])
 def change_password():
@@ -127,7 +147,7 @@ def restore_account():
 
         for char in username + security_code:
             if not char in Config.get_accepted_characters():
-                return render_template('message.html', message='Niedozwolone znaki!', link='/restore-account') # TMP message
+                return display_message('Użyto niedozwolonych znaków.', '/restore-account')
 
         try:
             sleep(10)
@@ -136,8 +156,8 @@ def restore_account():
             session['restoring_password'] = True
             return redirect('/restore-password')
         
-        except Exception as e:
-            return render_template('message.html', message=e, link='/restore-account') # TMP message
+        except:
+            return display_message('Podano niepoprawne dane.', '/restore-account')
 
 @app.route('/restore-password', methods=['GET', 'POST'])
 def restore_password():
@@ -224,11 +244,18 @@ def add_password():
     if not 'username' in session:
         return redirect('/login')
 
-    dbm.add_password(
-        session['username'],
-        request.form['name'],
-        request.form['password']
-    )
+    try:
+        dbm.add_password(
+            session['username'],
+            request.form['name'],
+            request.form['password']
+        )
+
+    except:
+        return display_message(
+            'Wystąpił błąd. Prawdopodobnie został spowodowany zbyt długą nazwą hasła.',
+            '/passwords'
+        )
 
     return redirect('/passwords')
 
@@ -238,11 +265,18 @@ def update_password():
         return redirect('/login')
     
     if request.form['owner'] == session['username']:
-        dbm.update_password(
-            int(request.form['id']),
-            request.form['name'],
-            request.form['value']
-        )
+        try:
+            dbm.update_password(
+                int(request.form['id']),
+                request.form['name'],
+                request.form['value']
+            )
+
+        except:
+            return display_message(
+                'Wystąpił błąd. Prawdopodobnie został spowodowany zbyt długą nazwą hasła.',
+                '/passwords'
+            )
 
     return redirect('/passwords')
 
@@ -262,7 +296,12 @@ def share():
         return redirect('/login')
 
     if request.form['owner'] == session['username']:
-        dbm.share_password(int(request.form['id']), request.form['username'])    
+        try:
+            dbm.share_password(int(request.form['id']), request.form['username'])    
+        except IntegrityError:
+            return display_message('Nie znaleziono użytkownika o podanej nazwie.', '/passwords')
+        except Exception:
+            return display_message('Błąd.', '/passwords')
 
     return redirect('/passwords')
 
@@ -288,6 +327,9 @@ def unshare_as_receiver():
         dbm.unshare_password(id_of_share)
 
     return redirect('/passwords')
+
+def display_message(message: str, link: str):
+    return render_template('message.html', message=message, link=link)
 
 if __name__ == '__main__':
     app.run(debug=True)
