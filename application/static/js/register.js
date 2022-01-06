@@ -1,5 +1,8 @@
 const displayCountersValue = () => {
-    const password = document.getElementById('password').value;
+    let password = document.getElementById('password') == null
+        ? document.getElementById('new-password').value
+        : document.getElementById('password').value;
+
     document.getElementById('quality-counter').innerHTML = calculateEntropy(password);
 };
 

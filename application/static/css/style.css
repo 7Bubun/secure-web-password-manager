@@ -261,3 +261,7 @@ li.passwords-row {
     border: none; 
     padding: 4px;
 }
+
+.max-width {
+    width: 100%;
+}
