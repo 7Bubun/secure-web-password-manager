@@ -3,26 +3,28 @@
 {% block maincontent %}
 <div id="login-container" class="container centered-content">
     <div id="login-form" class="centered-content">
-        <form action="#" method="post">
-            <h1>Rejestracja</h1>
+        <div style="width: 100%;">
+            <form action="#" method="post">
+                <h1>Rejestracja</h1>
 
-            <label for="username">Nazwa użytkownika</label> <br />
-            <input type="text" name="username" id="username" class="login-text-input" /> <br />
+                <label for="username">Nazwa użytkownika</label> <br />
+                <input type="text" name="username" id="username" class="login-text-input" /> <br />
 
-            <label for="password">Hasło</label> <br />
-            <input type="password" name="password" id="password" class="login-text-input"
-                onchange="displayCountersValue()" /> <br />
+                <label for="password">Hasło</label> <br />
+                <input type="password" name="password" id="password" class="login-text-input"
+                    onchange="displayCountersValue()" /> <br />
 
-            <label for="password-repeated">Powtórzone hasło</label> <br />
-            <input type="password" name="password-repeated" id="password-repeated" class="login-text-input" />
-            <br />
-            <input type="submit" value="Zarejestruj" class="btn-input register-btn-input" />
-        </form>
-    </div>
+                <label for="password-repeated">Powtórzone hasło</label> <br />
+                <input type="password" name="password-repeated" id="password-repeated" class="login-text-input" />
+                <br />
+                <input type="submit" value="Zarejestruj" class="btn-input register-btn-input" />
+            </form>
 
-    <div>
-        <h5>Entropia hasła:</h5>
-        <span id="quality-counter"></span>
+            <div>
+                <span>Entropia hasła:</span>
+                <span id="quality-counter"></span>
+            </div>
+        </div>
     </div>
 </div>
 

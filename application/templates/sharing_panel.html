@@ -1,19 +1,18 @@
 {% extends "logged_layout.html" %}
 
 {% block maincontent %}
-<div style="margin-top: 200px;">
-
-    nazwa hasła: {{passwords_name}} <br />
+<div id="share-password-container">
+    <h3>Nazwa hasła: {{passwords_name}}</h3>
 
     <h4>Lista użytkowników, którym hasło jest udostępniane:</h4>
     <ul>
         {% for user in users_and_share_ids %}
         <li>
             <form action="/shares-management/delete-as-owner" method="post">
-                <input readonly type="text" value="{{user[0]}}" />
+                <input readonly type="text" value="{{user[0]}}" class="shared-to" />
                 <input name="share_id" type="hidden" value="{{user[1]}}" />
                 <input name="owner" type="hidden" value="{{owner}}" />
-                <input type="submit" value="Usuń udostępnienie" />
+                <input type="submit" value="Usuń udostępnienie" class="btn-input" />
             </form>
         </li>
         {% endfor %}
@@ -24,7 +23,7 @@
         <input type="hidden" name="owner" value="{{owner}}" />
         <label for="username">Udostępnij hasło innemu użytkownikowi</label>
         <input type="text" name="username" id="username" />
-        <input type="submit" value="Udostępnij" />
+        <input type="submit" value="Udostępnij" class="btn-input" />
     </form>
 </div>
 {% endblock %}
