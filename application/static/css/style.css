@@ -63,10 +63,6 @@ body {
     text-decoration: none;
 }
 
-.big-header {
-    font-size: 64px;
-}
-
 #login-container {
     width: 640px;
     text-align: center;
