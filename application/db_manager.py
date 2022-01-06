@@ -47,11 +47,10 @@ class DataBaseManager:
         hashed_password = self.hasher.hash(bytes(password, 'ascii') + self.pepper)
         hashed_security_code = self.hasher.hash(self.pepper + bytes.fromhex(security_code))
         
-        query = f'''INSERT INTO USERS(USERNAME, HASHED_PASSWORD, HASHED_SECURITY_CODE) 
-                        VALUES ("{username}", "{hashed_password}", "{hashed_security_code}")'''
-        
+        query = 'INSERT INTO USERS(USERNAME, HASHED_PASSWORD, HASHED_SECURITY_CODE) VALUES (%s, %s, %s)'
+        values = (username, hashed_password, hashed_security_code)
         cursor = self.connection.cursor()
-        cursor.execute(query)
+        cursor.execute(query, values)
         self.connection.commit()
         cursor.close()
 
@@ -59,9 +58,10 @@ class DataBaseManager:
         username = str(escape(username))
         password = str(escape(password))
         
-        query = f'SELECT U.HASHED_PASSWORD FROM USERS AS U WHERE U.USERNAME = "{username}"'
+        query = 'SELECT U.HASHED_PASSWORD FROM USERS AS U WHERE U.USERNAME = %s'
+        values = (username,)
         cursor = self.connection.cursor()
-        cursor.execute(query)
+        cursor.execute(query, values)
         result = cursor.fetchone()[0]
         cursor.close()
 
@@ -75,9 +75,10 @@ class DataBaseManager:
         password_prepared = bytes(new_password, 'ascii') + self.pepper
         hashed_password = self.hasher.hash(password_prepared)
         
-        query = f'UPDATE USERS SET HASHED_PASSWORD = "{hashed_password}" WHERE USERNAME = "{username}"'
+        query = 'UPDATE USERS SET HASHED_PASSWORD = %s WHERE USERNAME = %s'
+        values = (hashed_password, username)
         cursor = self.connection.cursor()
-        cursor.execute(query)
+        cursor.execute(query, values)
         self.connection.commit()
         cursor.close()
 
@@ -85,9 +86,10 @@ class DataBaseManager:
         username = str(escape(username))
         security_code = str(escape(security_code))
         
-        query = f'SELECT U.HASHED_SECURITY_CODE FROM USERS AS U WHERE U.USERNAME = "{username}"'
+        query = 'SELECT U.HASHED_SECURITY_CODE FROM USERS AS U WHERE U.USERNAME = %s'
+        values = (username,)
         cursor = self.connection.cursor()
-        cursor.execute(query)
+        cursor.execute(query, values)
         result = cursor.fetchone()[0]
         cursor.close()
         self.hasher.verify(result, self.pepper + bytes.fromhex(security_code))
@@ -95,10 +97,11 @@ class DataBaseManager:
     def get_users_passwords(self, username: str):
         username = str(escape(username))
         
-        query = f'''SELECT P.NAME_OF_PASSWORD, AES_DECRYPT(P.VALUE_OF_PASSWORD, UNHEX("{self.key}"), "{str(self.init_vector)}"),
-                        P.OWNER_OF_PASSWORD, P.ID FROM PASSWORDS AS P WHERE P.OWNER_OF_PASSWORD = "{username}"'''
+        query = '''SELECT P.NAME_OF_PASSWORD, AES_DECRYPT(P.VALUE_OF_PASSWORD, UNHEX(%s), %s),
+                        P.OWNER_OF_PASSWORD, P.ID FROM PASSWORDS AS P WHERE P.OWNER_OF_PASSWORD = %s'''
+        values = (self.key, str(self.init_vector), username)
         cursor = self.connection.cursor()
-        cursor.execute(query)
+        cursor.execute(query, values)
         result = [(data[0], data[1].decode(), data[2], data[3]) for data in cursor]
         cursor.close()
         return result
@@ -108,13 +111,11 @@ class DataBaseManager:
         name_of_password = str(escape(name_of_password))
         value = str(escape(value))
 
-        query = f'''INSERT INTO PASSWORDS(NAME_OF_PASSWORD, VALUE_OF_PASSWORD, OWNER_OF_PASSWORD) 
-                        VALUES("{name_of_password}", AES_ENCRYPT("{value}", UNHEX("{self.key}"),
-                        "{str(self.init_vector)}"), "{user}")
-        '''
-        
+        query = '''INSERT INTO PASSWORDS(NAME_OF_PASSWORD, VALUE_OF_PASSWORD, OWNER_OF_PASSWORD) 
+                        VALUES(%s, AES_ENCRYPT(%s, UNHEX(%s), %s), %s)'''
+        values = (name_of_password, value, self.key, str(self.init_vector), user)
         cursor = self.connection.cursor()
-        cursor.execute(query)
+        cursor.execute(query, values)
         self.connection.commit()
         cursor.close()
 
@@ -122,29 +123,32 @@ class DataBaseManager:
         name = str(escape(name))
         value = str(escape(value))
 
-        query = f'''UPDATE PASSWORDS SET NAME_OF_PASSWORD = "{name}",
-                        VALUE_OF_PASSWORD = AES_ENCRYPT("{value}", UNHEX("{self.key}"), "{str(self.init_vector)}")
-                        WHERE ID = {password_id}
-        '''
-
+        query = '''UPDATE PASSWORDS SET NAME_OF_PASSWORD = %s, VALUE_OF_PASSWORD = AES_ENCRYPT(%s, UNHEX(%s), %s)
+                    WHERE ID = %s'''
+        values = (name, value, self.key, str(self.init_vector), password_id)
         cursor = self.connection.cursor()
-        cursor.execute(query)
+        cursor.execute(query, values)
         self.connection.commit()
         cursor.close()
 
     def delete_password(self, password_id: int):
         cursor = self.connection.cursor()
-        query = f'DELETE FROM SHARES WHERE ID_OF_PASSWORD = {password_id}'
-        cursor.execute(query)
-        query = f'DELETE FROM PASSWORDS WHERE ID = {password_id}'
-        cursor.execute(query)
+        values = (password_id,)
+        
+        query = 'DELETE FROM SHARES WHERE ID_OF_PASSWORD = %s'
+        cursor.execute(query, values)
+        
+        query = 'DELETE FROM PASSWORDS WHERE ID = %s'
+        cursor.execute(query, values)
+        
         self.connection.commit()
         cursor.close()
 
     def get_users_that_got_password_through_sharing_and_share_ids(self, password_id: int):
-        query = f'SELECT S.SHARED_TO, S.ID FROM SHARES AS S WHERE S.ID_OF_PASSWORD = {password_id}'
+        query = 'SELECT S.SHARED_TO, S.ID FROM SHARES AS S WHERE S.ID_OF_PASSWORD = %s'
+        values = (password_id,)
         cursor = self.connection.cursor()
-        cursor.execute(query)
+        cursor.execute(query, values)
         result = list(cursor)
         cursor.close()
         return result
@@ -152,36 +156,38 @@ class DataBaseManager:
     def share_password(self, password_id: int, share_receivers_username: str):
         share_receivers_username = str(escape(share_receivers_username))
 
-        query = f'INSERT INTO SHARES(ID_OF_PASSWORD, SHARED_TO) VALUES({password_id}, "{share_receivers_username}")'
+        query = 'INSERT INTO SHARES(ID_OF_PASSWORD, SHARED_TO) VALUES(%s, %s)'
+        values = (password_id, share_receivers_username)
         cursor = self.connection.cursor()
-        cursor.execute(query)
+        cursor.execute(query, values)
         self.connection.commit()
         cursor.close()
 
     def get_passwords_shared_to_user(self, username: str):
         username = str(escape(username))
 
-        query = f'''SELECT P.NAME_OF_PASSWORD, AES_DECRYPT(P.VALUE_OF_PASSWORD, UNHEX("{self.key}"), "{str(self.init_vector)}"),
-                        P.OWNER_OF_PASSWORD, S.ID FROM PASSWORDS AS P, SHARES AS S 
-                        WHERE P.ID = S.ID_OF_PASSWORD AND S.SHARED_TO = "{username}"
-        '''
+        query = '''SELECT P.NAME_OF_PASSWORD, AES_DECRYPT(P.VALUE_OF_PASSWORD, UNHEX(%s), %s), P.OWNER_OF_PASSWORD, S.ID
+                        FROM PASSWORDS AS P, SHARES AS S WHERE P.ID = S.ID_OF_PASSWORD AND S.SHARED_TO = %s'''
+        values = (self.key, str(self.init_vector), username)
         cursor = self.connection.cursor()
-        cursor.execute(query)
+        cursor.execute(query, values)
         result = [(data[0], data[1].decode(), data[2], data[3]) for data in cursor]
         cursor.close()
         return result
 
     def get_user_that_password_is_shared_to(self, id_of_share: int): 
-        query = f'SELECT U.USERNAME FROM USERS AS U, SHARES AS S WHERE S.SHARED_TO = U.USERNAME AND S.ID = {id_of_share}'
+        query = 'SELECT S.SHARED_TO FROM SHARES AS S WHERE S.ID = %s'
+        values = (id_of_share,)
         cursor = self.connection.cursor()
-        cursor.execute(query)
+        cursor.execute(query, values)
         result = cursor.fetchone()
         cursor.close()
         return result[0]
 
     def unshare_password(self, id_of_share: int):
-        query = f'DELETE FROM SHARES WHERE ID = {id_of_share}'
+        query = 'DELETE FROM SHARES WHERE ID = %s'
+        values = (id_of_share,)
         cursor = self.connection.cursor()
-        cursor.execute(query)
+        cursor.execute(query, values)
         self.connection.commit()
         cursor.close()
