@@ -4,12 +4,13 @@ from Crypto.Protocol.KDF import PBKDF2
 from Crypto.Random import get_random_bytes
 
 from config import Config
-import db_manager
-
+from  db_manager import DataBaseManager
+from login_attempts_guard import LoginAttemptsGuard
 
 app = Flask(__name__)   # TO DO: store password in env
 app.secret_key = PBKDF2('drowssap', salt=get_random_bytes(8), count=1234)
-dbm = db_manager.DataBaseManager()
+dbm = DataBaseManager()
+lag = LoginAttemptsGuard()
 
 @app.route('/')
 def index():
@@ -29,6 +30,15 @@ def login():
         username = request.form['username']
         password = request.form['password']
 
+        lag.refresh_login_attempts()
+
+        if not lag.verify_login_attempt(username):
+            return render_template(
+                'message.html',
+                message='Konto tymczasowo zablokowane z powodu zbyt dużej liczby prób logowania.',
+                link='/login'
+            )
+
         for char in username + password:
             if not char in Config.get_accepted_characters():
                 return render_template('message.html', message='Niedozwolone znaki!', link='/login') # TMP message
@@ -38,6 +48,7 @@ def login():
             session['username'] = username            
             return redirect('/passwords')
         except Exception as e:
+            lag.add_login_attempt(username)
             return render_template('message.html', message=e, link='/login') #TMP message 
 
 @app.route('/logout')
