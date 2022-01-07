@@ -1,6 +1,6 @@
 from flask import Blueprint, session, request, redirect, render_template
 
-from main import dbm, display_message
+from tools import dbm, display_message
 
 
 pm = Blueprint('password_management', __name__, static_folder='static', template_folder='templates')
@@ -8,7 +8,7 @@ pm = Blueprint('password_management', __name__, static_folder='static', template
 @pm.route('/action', methods=['POST'])
 def choose_action():
     if not 'username' in session:
-        return redirect('/login')
+        return redirect('/account/login')
 
     password_id = int(request.form['id'])
     password_name = request.form['name']
@@ -49,7 +49,7 @@ def choose_action():
 @pm.route('/add', methods=['POST'])
 def add_password():
     if not 'username' in session:
-        return redirect('/login')
+        return redirect('/account/login')
 
     try:
         dbm.add_password(
@@ -69,7 +69,7 @@ def add_password():
 @pm.route('/update', methods=['POST'])
 def update_password(): 
     if not 'username' in session:
-        return redirect('/login')
+        return redirect('/account/login')
     
     if request.form['owner'] == session['username']:
         try:
@@ -90,7 +90,7 @@ def update_password():
 @pm.route('/delete', methods=['POST'])
 def delete_password():
     if not 'username' in session:
-        return redirect('/login')
+        return redirect('/account/login')
 
     if request.form['owner'] == session['username']:
         dbm.delete_password(int(request.form['id']))

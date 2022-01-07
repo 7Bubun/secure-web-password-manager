@@ -1,7 +1,7 @@
 from flask import Blueprint, session, request, redirect
 from mysql.connector.errors import IntegrityError
 
-from main import dbm, display_message
+from tools import dbm, display_message
 
 
 sm = Blueprint('shares_management', __name__, static_folder='static', template_folder='templates')
@@ -9,7 +9,7 @@ sm = Blueprint('shares_management', __name__, static_folder='static', template_f
 @sm.route('/add', methods=['POST'])
 def share():
     if not 'username' in session:
-        return redirect('/login')
+        return redirect('/account/login')
 
     if request.form['owner'] == session['username']:
         try:
@@ -24,7 +24,7 @@ def share():
 @sm.route('/delete-as-owner', methods=['POST'])
 def unshare_as_owner():
     if not 'username' in session:
-        return redirect('/login')
+        return redirect('/account/login')
 
     if request.form['owner'] == session['username']:
         dbm.unshare_password(int(request.form['share_id']))
@@ -34,7 +34,7 @@ def unshare_as_owner():
 @sm.route('/delete-as-receiver', methods=['POST'])
 def unshare_as_receiver():
     if not 'username' in session:
-        return redirect('/login')
+        return redirect('/account/login')
 
     id_of_share = int(request.form['share_id'])
     receiver = dbm.get_user_that_password_is_shared_to(id_of_share)

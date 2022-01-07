@@ -2,7 +2,7 @@ from flask import Blueprint, session, request, redirect, render_template
 from Crypto.Random import get_random_bytes
 from time import sleep
 
-from main import dbm, lag, display_message
+from tools import dbm, lag, display_message
 from config import Config
 
 account = Blueprint('account', __name__, static_folder='static', template_folder='templates')
@@ -16,7 +16,7 @@ def login():
     
     else:
         if not 'username' in request.form or not 'password' in request.form:
-            return render_template('message.html', message='bad form', link='/login')
+            return display_message('Niepoprawny formularz.', '/account/login')
 
         sleep(0.7)
         username = request.form['username']
@@ -25,15 +25,11 @@ def login():
         lag.refresh_login_attempts()
 
         if not lag.verify_login_attempt(username):
-            return render_template(
-                'message.html',
-                message='Konto tymczasowo zablokowane z powodu zbyt dużej liczby prób logowania.',
-                link='/login'
-            )
+            return display_message('Konto tymczasowo zablokowane z powodu zbyt dużej liczby prób logowania.', '/account/login')
 
         for char in username + password:
             if not char in Config.get_accepted_characters():
-                return render_template('message.html', message='Niedozwolone znaki!', link='/login') # TMP message
+                return display_message('Użyto niedozwolonych znaków.', '/account/login')
 
         try:
             dbm.verify_user(username, password)
@@ -41,16 +37,12 @@ def login():
             return redirect('/passwords')
         except Exception:
             lag.add_login_attempt(username)
-            return render_template(
-                'message.html',
-                message='Podane dane logowania są nieprawidłowe.',
-                link='/login'
-            ) 
+            return display_message('Podane dane logowania są nieprawidłowe.', '/account/login') 
 
 @account.route('/logout')
 def logout():
     session.clear()
-    return redirect('/login')
+    return redirect('/account/login')
 
 @account.route('/register', methods=['GET', 'POST'])
 def register():
@@ -64,13 +56,13 @@ def register():
         
         for char in username + password:
             if not char in Config.get_accepted_characters():
-                return render_template('message.html', message='Użyto niedozwolonych znaków.', link='/register')
+                return display_message('Użyto niedozwolonych znaków.', '/account/register')
 
         if len(username) < 1:
-            return display_message('Nazwa użytkownika nie może być pusta.', '/register')
+            return display_message('Nazwa użytkownika nie może być pusta.', '/account/register')
 
         if len(password) < 7:
-            return display_message('Minimalna długość hasła wynosi 7 znaków.', '/register')
+            return display_message('Minimalna długość hasła wynosi 7 znaków.', '/account/register')
 
         if password == repeated_password:
             try:
@@ -78,20 +70,16 @@ def register():
                 dbm.create_user(username, password, security_code)
                 return render_template('security_code.html', security_code=security_code)
 
-            except Exception as e:                              
-                return display_message('Podana nazwa użytkownika jest zajęta lub za długa.', '/register')
+            except:                              
+                return display_message('Podana nazwa użytkownika jest zajęta lub za długa.', '/account/register')
 
         else:
-            return render_template(
-                'message.html',
-                message='Hasło i powtórzone hasło muszą być takie same.',
-                link='/register'
-            )
+            return display_message('Hasło i powtórzone hasło muszą być takie same.', '/account/register')
 
 @account.route('/change-password', methods=['GET', 'POST'])
 def change_password():
     if not 'username' in session:
-            return redirect('/login')
+            return redirect('/account/login')
     
     if request.method == 'GET':
         return render_template('change_password.html')
@@ -105,7 +93,7 @@ def change_password():
 
         for char in username + new_password:
             if not char in Config.get_accepted_characters():
-                return render_template('message.html', message='Użyto niedozwolonych znaków.', link='/change-password')
+                return display_message('Użyto niedozwolonych znaków.', '/account/change-password')
 
         try:
             dbm.verify_user(username, old_password)
@@ -113,16 +101,12 @@ def change_password():
             if new_password == new_password_repeated:
                 dbm.change_users_account_password(username, new_password)
             else:
-                return render_template(
-                    'message.html',
-                    message='Hasło i powtórzone hasło muszą być takie same.',
-                    link='/change-password'
-                )
+                return display_message('Hasło i powtórzone hasło muszą być takie same.', '/account/change-password')
     
-        except Exception as e:
-            return render_template('message.html', message='Błąd.', link='/change-password')
+        except:
+            return display_message('Błąd.', link='/account/change-password')
 
-        return render_template('message.html', message='Pomyślnie zmieniono hasło', link='/passwords')
+        return display_message('Pomyślnie zmieniono hasło', link='/passwords')
 
 @account.route('/restore-account', methods=['GET', 'POST'])
 def restore_account():
@@ -138,22 +122,22 @@ def restore_account():
 
         for char in username + security_code:
             if not char in Config.get_accepted_characters():
-                return display_message('Użyto niedozwolonych znaków.', '/restore-account')
+                return display_message('Użyto niedozwolonych znaków.', '/account/restore-account')
 
         try:
             sleep(10)
             dbm.verify_security_code(username, security_code)
             session['username'] = username
             session['restoring_password'] = True
-            return redirect('/restore-password')
+            return redirect('/account/restore-password')
         
         except:
-            return display_message('Podano niepoprawne dane.', '/restore-account')
+            return display_message('Podano niepoprawne dane.', '/account/restore-account')
 
 @account.route('/restore-password', methods=['GET', 'POST'])
 def restore_password():
     if not 'restoring_password' in session or not session['restoring_password']:
-        return redirect('/change-password')
+        return redirect('/password-management/change-password')
 
     if request.method == 'GET':
         return render_template('restore_password.html')
@@ -164,11 +148,11 @@ def restore_password():
 
         for char in username + new_password:
             if not char in Config.get_accepted_characters():
-                return render_template('message.html', message='Użyto niedozwolonych znaków.', link='/restore-password')
+                return display_message('Użyto niedozwolonych znaków.', '/password-management/restore-password')
 
         if new_password == repeated_new_password:
             dbm.change_users_account_password(username, new_password)
             session['restoring_password'] = False
-            return redirect('/login')
+            return redirect('/account/login')
         else:
-            return render_template('message.html', message='różne', link='/restore-password')
+            return display_message('Hasło i powtórzone hasło muszą być takie same.', link='/password-management/restore-password')
