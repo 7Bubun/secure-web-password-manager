@@ -35,7 +35,7 @@ def login():
             dbm.verify_user(username, password)
             session['username'] = username            
             return redirect('/passwords')
-        except Exception:
+        except:
             lag.add_login_attempt(username)
             return display_message('Podane dane logowania są nieprawidłowe.', '/account/login') 
 
@@ -91,6 +91,9 @@ def change_password():
         new_password_repeated = request.form['repeated-new-password']
         old_password = request.form['old-password']
 
+        if len(new_password) < 7:
+            return display_message('Minimalna długość hasła wynosi 7 znaków.', '/account/change-password')
+
         for char in username + new_password:
             if not char in Config.get_accepted_characters():
                 return display_message('Użyto niedozwolonych znaków.', '/account/change-password')
@@ -145,6 +148,9 @@ def restore_password():
         username = session['username']
         new_password = request.form['new-password']
         repeated_new_password = request.form['repeated-new-password']
+
+        if len(new_password) < 7:
+            return display_message('Minimalna długość hasła wynosi 7 znaków.', '/account/restore-password')
 
         for char in username + new_password:
             if not char in Config.get_accepted_characters():
