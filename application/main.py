@@ -86,13 +86,13 @@ def register():
         
         for char in username + password:
             if not char in Config.get_accepted_characters():
-                return render_template('message.html', message='Niedozwolone znaki!', link='/register') # TMP message
+                return render_template('message.html', message='Użyto niedozwolonych znaków.', link='/register')
 
         if len(username) < 1:
             return display_message('Nazwa użytkownika nie może być pusta.', '/register')
 
-        if len(password) < 3:
-            return display_message('Minimalna długość hasła wynosi 3 znaki.', '/register')
+        if len(password) < 7:
+            return display_message('Minimalna długość hasła wynosi 7 znaków.', '/register')
 
         if password == repeated_password:
             try:
@@ -127,7 +127,7 @@ def change_password():
 
         for char in username + new_password:
             if not char in Config.get_accepted_characters():
-                return render_template('message.html', message='Niedozwolone znaki!', link='/change-password') # TMP message
+                return render_template('message.html', message='Użyto niedozwolonych znaków.', link='/change-password')
 
         try:
             dbm.verify_user(username, old_password)

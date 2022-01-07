@@ -21,11 +21,11 @@ class DataBaseManager:
             database='PASSWORD_MANAGER'
         )
 
-        f = open('pepper', 'rb')
+        f = open(getenv('PATH_TO_PEPPER'), 'rb')
         self.pepper = f.read()
         f.close()
 
-        f = open('initialization_vector', 'rb')
+        f = open(getenv('PATH_TO_IV'), 'rb')
         self.init_vector = f.read()
         f.close()
 
