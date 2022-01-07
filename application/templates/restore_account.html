@@ -12,6 +12,8 @@
 
                 <label for="code">Kod odzyskiwania</label> <br />
                 <input type="password" name="code" id="code" class="login-text-input" /> <br />
+
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
                 <input type="submit" value="Odzyskaj" class="btn-input login-btn-input" />
             </form>
 

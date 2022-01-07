@@ -1,5 +1,6 @@
 from time import sleep
 from flask import Flask, redirect, render_template, request, session
+from flask_wtf.csrf import CSRFProtect, CSRFError
 from Crypto.Protocol.KDF import PBKDF2
 from Crypto.Random import get_random_bytes
 from mysql.connector.errors import IntegrityError
@@ -10,6 +11,7 @@ from login_attempts_guard import LoginAttemptsGuard
 
 app = Flask(__name__)   # TO DO: store password in env
 app.secret_key = PBKDF2('drowssap', salt=get_random_bytes(8), count=1234)
+protected_app = CSRFProtect(app)
 lag = LoginAttemptsGuard()
 
 try:
@@ -17,6 +19,10 @@ try:
 except:
     print('Nie udało się połączyć z bazą danych.')
     exit(1)
+
+@app.errorhandler(CSRFError)
+def handle_csrf_error(e):
+    return display_message('Błąd tokenu CSRF', '/login')
 
 @app.route('/')
 def index():
@@ -33,6 +39,7 @@ def login():
         if not 'username' in request.form or not 'password' in request.form:
             return render_template('message.html', message='bad form', link='/login')
 
+        sleep(0.7)
         username = request.form['username']
         password = request.form['password']
 
@@ -111,6 +118,7 @@ def change_password():
         return render_template('change_password.html')
 
     else:
+        sleep(0.5)
         username = session['username']
         new_password = request.form['new-password']
         new_password_repeated = request.form['repeated-new-password']

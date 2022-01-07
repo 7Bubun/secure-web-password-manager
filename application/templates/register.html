@@ -17,6 +17,7 @@
                 <label for="password-repeated">Powtórzone hasło</label> <br />
                 <input type="password" name="password-repeated" id="password-repeated" class="login-text-input" />
                 <br />
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
                 <input type="submit" value="Zarejestruj" class="btn-input register-btn-input" />
             </form>
 

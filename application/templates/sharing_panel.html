@@ -12,6 +12,7 @@
                 <input readonly type="text" value="{{user[0]}}" class="shared-to" />
                 <input name="share_id" type="hidden" value="{{user[1]}}" />
                 <input name="owner" type="hidden" value="{{owner}}" />
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
                 <input type="submit" value="Usuń udostępnienie" class="btn-input" />
             </form>
         </li>
@@ -23,6 +24,7 @@
         <input type="hidden" name="owner" value="{{owner}}" />
         <label for="username">Udostępnij hasło innemu użytkownikowi</label>
         <input type="text" name="username" id="username" />
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
         <input type="submit" value="Udostępnij" class="btn-input" />
     </form>
 </div>

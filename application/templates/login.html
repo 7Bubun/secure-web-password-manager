@@ -11,6 +11,8 @@
 
             <label for="password">Hasło</label> <br />
             <input type="password" name="password" id="password" class="login-text-input" /> <br />
+
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
             <input type="submit" value="Zaloguj" class="btn-input login-btn-input" />
         </form>
     </div>
