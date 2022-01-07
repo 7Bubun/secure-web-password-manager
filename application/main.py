@@ -4,13 +4,14 @@ from flask_wtf.csrf import CSRFProtect, CSRFError
 from Crypto.Protocol.KDF import PBKDF2
 from Crypto.Random import get_random_bytes
 from mysql.connector.errors import IntegrityError
+import os
 
 from config import Config
 from db_manager import DataBaseManager
 from login_attempts_guard import LoginAttemptsGuard
 
-app = Flask(__name__)   # TO DO: store password in env
-app.secret_key = PBKDF2('drowssap', salt=get_random_bytes(8), count=1234)
+app = Flask(__name__)
+app.secret_key = PBKDF2(os.getenv('PM_SECRET_KEY'), salt=get_random_bytes(8), count=1234)
 protected_app = CSRFProtect(app)
 lag = LoginAttemptsGuard()
 
@@ -134,10 +135,14 @@ def change_password():
             if new_password == new_password_repeated:
                 dbm.change_users_account_password(username, new_password)
             else:
-                return render_template('message.html', message='różne', link='/change-password') # TMP message
+                return render_template(
+                    'message.html',
+                    message='Hasło i powtórzone hasło muszą być takie same.',
+                    link='/change-password'
+                )
     
         except Exception as e:
-            return render_template('message.html', message=e, link='/change-password') # TMP message
+            return render_template('message.html', message='Błąd.', link='/change-password')
 
         return render_template('message.html', message='Pomyślnie zmieniono hasło', link='/passwords')
 
@@ -181,7 +186,7 @@ def restore_password():
 
         for char in username + new_password:
             if not char in Config.get_accepted_characters():
-                return render_template('message.html', message='Niedozwolone znaki!', link='/restore-password') # TMP message
+                return render_template('message.html', message='Użyto niedozwolonych znaków.', link='/restore-password')
 
         if new_password == repeated_new_password:
             dbm.change_users_account_password(username, new_password)
@@ -340,4 +345,4 @@ def display_message(message: str, link: str):
     return render_template('message.html', message=message, link=link)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run()

@@ -1,7 +1,7 @@
 from argon2 import PasswordHasher
 from Crypto.Protocol.KDF import PBKDF2
 from markupsafe import escape
-from os import environ
+from os import getenv
 import mysql.connector
 
 from config import Config
@@ -10,14 +10,14 @@ from config import Config
 class DataBaseManager:
 
     def __init__(self):
-        passphrase = 'passphrase' # not secure yet
-        salt = b'salt' # not secure yet
+        passphrase = getenv('PM_PASSPHRASE')
+        salt = bytes(getenv('PM_SALT'), 'ascii')
         self.key = PBKDF2(passphrase, salt, count=1234).hex()
         
         self.connection = mysql.connector.connect(
             host='localhost',
             user='password_manager',
-            password='843gfbwufb239eubswsfhsife', # environ.get('PM_SECRET'),
+            password=getenv('PM_DB'),
             database='PASSWORD_MANAGER'
         )
 
