@@ -1,9 +1,11 @@
 from flask import Blueprint, session, request, redirect, render_template
-from Crypto.Random import get_random_bytes
+from Crypto.Random import get_random_bytes, new
 from time import sleep
 
-from tools import dbm, lag, display_message
+from tools import dbm, lag, display_message, calculate_entropy
 from config import Config
+
+MINIMAL_ENTROPY = 2.5
 
 account = Blueprint('account', __name__, static_folder='static', template_folder='templates')
 
@@ -53,7 +55,8 @@ def register():
         username = request.form['username']
         password = request.form['password']
         repeated_password = request.form['password-repeated']
-        
+        entropy_of_password = calculate_entropy(password)
+
         for char in username + password:
             if not char in Config.get_accepted_characters():
                 return display_message('Użyto niedozwolonych znaków.', '/account/register')
@@ -63,6 +66,10 @@ def register():
 
         if len(password) < 7:
             return display_message('Minimalna długość hasła wynosi 7 znaków.', '/account/register')
+
+        if entropy_of_password < MINIMAL_ENTROPY:
+            return display_message(f'''Hasło nie jest wystarczająco mocne. Entropia hasła: {entropy_of_password},
+                minimalny dopuszczalny próg entropii: {MINIMAL_ENTROPY}.''', '/account/register')
 
         if password == repeated_password:
             try:
@@ -90,6 +97,7 @@ def change_password():
         new_password = request.form['new-password']
         new_password_repeated = request.form['repeated-new-password']
         old_password = request.form['old-password']
+        entropy_of_password = calculate_entropy(new_password)
 
         if len(new_password) < 7:
             return display_message('Minimalna długość hasła wynosi 7 znaków.', '/account/change-password')
@@ -97,6 +105,10 @@ def change_password():
         for char in username + new_password:
             if not char in Config.get_accepted_characters():
                 return display_message('Użyto niedozwolonych znaków.', '/account/change-password')
+
+        if entropy_of_password < MINIMAL_ENTROPY:
+            return display_message(f'''Hasło nie jest wystarczająco mocne. Entropia hasła: {entropy_of_password},
+                minimalny dopuszczalny próg entropii: {MINIMAL_ENTROPY}.''', '/account/change-password')
 
         try:
             dbm.verify_user(username, old_password)
@@ -148,6 +160,7 @@ def restore_password():
         username = session['username']
         new_password = request.form['new-password']
         repeated_new_password = request.form['repeated-new-password']
+        entropy_of_password = calculate_entropy(new_password)
 
         if len(new_password) < 7:
             return display_message('Minimalna długość hasła wynosi 7 znaków.', '/account/restore-password')
@@ -155,6 +168,10 @@ def restore_password():
         for char in username + new_password:
             if not char in Config.get_accepted_characters():
                 return display_message('Użyto niedozwolonych znaków.', '/password-management/restore-password')
+
+        if entropy_of_password < MINIMAL_ENTROPY:
+            return display_message(f'''Hasło nie jest wystarczająco mocne. Entropia hasła: {entropy_of_password},
+                minimalny dopuszczalny próg entropii: {MINIMAL_ENTROPY}.''', '/account/restore-password')
 
         if new_password == repeated_new_password:
             dbm.change_users_account_password(username, new_password)
