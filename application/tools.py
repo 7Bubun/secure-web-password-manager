@@ -3,7 +3,7 @@ from math import log2
 
 from db_manager import DataBaseManager
 from login_attempts_guard import LoginAttemptsGuard
-
+from config import Config
 
 lag = LoginAttemptsGuard()
 
@@ -31,3 +31,10 @@ def calculate_entropy(text):
         entropy -= p * log2(p)
 
     return entropy
+
+def check_characters(characters):
+    for c in characters:
+        if not c in Config.get_accepted_characters():
+            return False
+
+    return True

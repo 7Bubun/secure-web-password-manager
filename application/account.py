@@ -2,7 +2,7 @@ from flask import Blueprint, session, request, redirect, render_template
 from Crypto.Random import get_random_bytes, new
 from time import sleep
 
-from tools import dbm, lag, display_message, calculate_entropy
+from tools import *
 from config import Config
 
 MINIMAL_ENTROPY = 2.5
@@ -29,9 +29,8 @@ def login():
         if not lag.verify_login_attempt(username):
             return display_message('Konto tymczasowo zablokowane z powodu zbyt dużej liczby prób logowania.', '/account/login')
 
-        for char in username + password:
-            if not char in Config.get_accepted_characters():
-                return display_message('Użyto niedozwolonych znaków.', '/account/login')
+        if not check_characters(username + password):
+            return display_message('Użyto niedozwolonych znaków.', '/account/login')
 
         try:
             dbm.verify_user(username, password)
@@ -57,9 +56,8 @@ def register():
         repeated_password = request.form['password-repeated']
         entropy_of_password = calculate_entropy(password)
 
-        for char in username + password:
-            if not char in Config.get_accepted_characters():
-                return display_message('Użyto niedozwolonych znaków.', '/account/register')
+        if not check_characters(username + password):
+            return display_message('Użyto niedozwolonych znaków.', '/account/register')
 
         if len(username) < 1:
             return display_message('Nazwa użytkownika nie może być pusta.', '/account/register')
@@ -102,9 +100,8 @@ def change_password():
         if len(new_password) < 7:
             return display_message('Minimalna długość hasła wynosi 7 znaków.', '/account/change-password')
 
-        for char in username + new_password:
-            if not char in Config.get_accepted_characters():
-                return display_message('Użyto niedozwolonych znaków.', '/account/change-password')
+        if not check_characters(username + new_password):
+            return display_message('Użyto niedozwolonych znaków.', '/account/change-password')
 
         if entropy_of_password < MINIMAL_ENTROPY:
             return display_message(f'''Hasło nie jest wystarczająco mocne. Entropia hasła: {entropy_of_password},
@@ -135,9 +132,8 @@ def restore_account():
         username = request.form['username']
         security_code = request.form['code'].lower()
 
-        for char in username + security_code:
-            if not char in Config.get_accepted_characters():
-                return display_message('Użyto niedozwolonych znaków.', '/account/restore-account')
+        if not check_characters(username + security_code):
+            return display_message('Użyto niedozwolonych znaków.', '/account/restore-account')
 
         try:
             sleep(10)
@@ -165,9 +161,8 @@ def restore_password():
         if len(new_password) < 7:
             return display_message('Minimalna długość hasła wynosi 7 znaków.', '/account/restore-password')
 
-        for char in username + new_password:
-            if not char in Config.get_accepted_characters():
-                return display_message('Użyto niedozwolonych znaków.', '/password-management/restore-password')
+        if not check_characters(username + new_password):
+            return display_message('Użyto niedozwolonych znaków.', '/password-management/restore-password')
 
         if entropy_of_password < MINIMAL_ENTROPY:
             return display_message(f'''Hasło nie jest wystarczająco mocne. Entropia hasła: {entropy_of_password},
